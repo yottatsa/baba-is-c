@@ -1,3 +1,9 @@
+/*
+ * baba-is-c -- a demake -- by yottatsa 2020
+ *
+ * Based on
+ * 9 rem baba is c64 -- a demake -- by nick bensema 2019
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,7 +15,8 @@
 
 
 // 25 dim pf%(mx):rem playfield map
-unsigned char pf[MX];	
+static unsigned char pf[MX];
+unsigned char you = 52;
 
 
 void unpack_level(char *lv) {
@@ -77,11 +84,11 @@ void unpack_level(char *lv) {
 }
 
 void draw_screen(void) {
-	unsigned char i, pos = 0;
+	unsigned char i;
 #ifdef __C64__
 	register char *tile;
-	register unsigned int offset = 0x0400;
-	unsigned char j;
+	register unsigned int char_mem = 0x0400;
+	unsigned char j, pos = 0;
 #else
 	char *tile;
 #endif
@@ -90,11 +97,15 @@ void draw_screen(void) {
 #ifndef __C64__
 	gotoxy(0, 0);
 #endif
+	gotoxy(5, H+1);
+	printf("%3d", you);
 	for (i = 0; i < MX; ++i) {
 		tile = (char *) gr[pf[i] & 31];
 #ifndef __C64__
 		if (i != 0 && i % W == 0) puts("");
+		if (i == you) textcolor(YELLOW);
 		printf(tile);
+		if (i == you) textcolor(WHITE);
 #else
 		j = 0;
 		draw_screen_loop: ;
@@ -102,15 +113,66 @@ void draw_screen(void) {
 		__asm__("lda (%v),y", tile);
 		__asm__("beq %g", draw_screen_loop_end);
 		__asm__("ldy %v", pos);
-		__asm__("sta (%v),y", offset);
+		__asm__("sta (%v),y", char_mem);
+		if (i == you) {
+			__asm__("lda #$00");
+			__asm__("ldy %v", pos);
+			__asm__("sta $D800,y");
+		}
+		if (i != you) {
+			__asm__("lda #$03");
+			__asm__("ldy %v", pos);
+			__asm__("sta $D800,y");
+		}
 		++pos;
 		++j;
-		if (pos == 0) offset = offset + 0x100;
+		if (pos == 0) char_mem = char_mem + 0x100;
 		goto draw_screen_loop;
 
 		draw_screen_loop_end: ;
 #endif
 	}
+}
+
+void win(void) {
+	gotoxy(0, H+2);
+	printf("congratulations. press any for next\n");
+	cgetc();
+}
+
+void lose(void) {
+	gotoxy(0, H+2);
+	printf("nothing is you. press any for repeat\n");
+	cgetc();
+}
+
+unsigned char main_loop(void) {
+	unsigned char k;
+	while (1) {
+		draw_screen();
+		gotoxy(0, H+1);
+		printf(">");
+		k = cgetc();
+		switch (k) {
+			case 'q':
+				win();
+				return 0;
+			case 'a':
+				--you;
+				break;
+			case 'd': 
+				++you;
+				break;
+			case 'w': 
+				you = you - W;
+				break;
+			case 's': 
+				you = you + W;
+				break;
+			default: ;;
+		}
+	}
+	return 0;
 }
 
 int main (void) {
@@ -120,15 +182,12 @@ int main (void) {
 	textcolor(WHITE);
 
 	for (i = 0; i < ML; ++i) {
-		clrscr();
-		printf("Loading level %d", i+1);
-		unpack_level(levels[i]);
-		clrscr();
-		draw_screen();
-		gotoxy(0, H+2);
-		printf("done");
-		cgetc();
+		do {
+			clrscr();
+			printf("loading level %d", i+1);
+			unpack_level(levels[i]);
+			clrscr();
+		} while (main_loop() != 0);
 	}
-	//clrscr();
 	return EXIT_SUCCESS;
 }

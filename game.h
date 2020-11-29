@@ -1,8 +1,9 @@
 #define W 10
-#define H 18
+#define H 12
 #define MX H*W
 #define IS 31
 
+// 40 dim gr$(31):rem gfx tiles 4x1
 static char gr[32][5] = {
 	"....", ".ZZ.",
 	"****", "====",
@@ -14,7 +15,7 @@ static char gr[32][5] = {
 	"flag", "watr",
 	"key ", "door",
 	// 9100 rem properties/verbs 16-31
-	//  9110 rem property is ru%(obj) and...
+	// 9110 rem property is ru%(obj) and...
 	"you ",
 	"win!",
 	"stop",
