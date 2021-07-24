@@ -8,10 +8,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <conio.h>
+
+#include "fastconio.h"
 #include "game.h"
-#include "const.h"
 
 #define PROGRESS cputc(*".");
+#define TEXTCOLOR WHITE
 
 
 // 25 dim pf%(mx):rem playfield map
@@ -83,54 +85,20 @@ void unpack_level(char *lv) {
 	}
 }
 
+#define TILE_INACTIVE DARKGRAY
+#define TILE_ACTIVE YELLOW
 void draw_screen(void) {
 	unsigned char i;
-#ifdef __C64__
-	register char *tile;
-	register unsigned int char_mem = 0x0400;
-	unsigned char j, pos = 0;
-#else
 	char *tile;
-#endif
 
 	// 905 print"{home}";:for n=0tomx:printgr$(pf%(n)and31);:next n
-#ifndef __C64__
-	gotoxy(0, 0);
-#endif
-	gotoxy(5, H+1);
-	printf("%3d", you);
+	fastgotoxy(0, 0);
+	fasttextcolor(TILE_INACTIVE);
 	for (i = 0; i < MX; ++i) {
 		tile = (char *) gr[pf[i] & 31];
-#ifndef __C64__
-		if (i != 0 && i % W == 0) puts("");
-		if (i == you) textcolor(YELLOW);
-		printf(tile);
-		if (i == you) textcolor(WHITE);
-#else
-		j = 0;
-		draw_screen_loop: ;
-		__asm__("ldy %v", j);
-		__asm__("lda (%v),y", tile);
-		__asm__("beq %g", draw_screen_loop_end);
-		__asm__("ldy %v", pos);
-		__asm__("sta (%v),y", char_mem);
-		if (i == you) {
-			__asm__("lda #$00");
-			__asm__("ldy %v", pos);
-			__asm__("sta $D800,y");
-		}
-		if (i != you) {
-			__asm__("lda #$03");
-			__asm__("ldy %v", pos);
-			__asm__("sta $D800,y");
-		}
-		++pos;
-		++j;
-		if (pos == 0) char_mem = char_mem + 0x100;
-		goto draw_screen_loop;
-
-		draw_screen_loop_end: ;
-#endif
+		if (i == you) fasttextcolor(TILE_ACTIVE);
+		fastcputs(tile, 4);
+		if (i == you) fasttextcolor(TILE_INACTIVE);
 	}
 }
 
@@ -146,10 +114,15 @@ void lose(void) {
 	cgetc();
 }
 
+void move(char x, char y) {
+	you = you + x + y * W;
+}
+
 unsigned char main_loop(void) {
 	unsigned char k;
 	while (1) {
 		draw_screen();
+		textcolor(TEXTCOLOR);
 		gotoxy(0, H+1);
 		printf(">");
 		k = cgetc();
@@ -158,16 +131,16 @@ unsigned char main_loop(void) {
 				win();
 				return 0;
 			case 'a':
-				--you;
+				move(-1, 0);
 				break;
 			case 'd': 
-				++you;
+				move(1, 0);
 				break;
 			case 'w': 
-				you = you - W;
+				move(0, -1);
 				break;
 			case 's': 
-				you = you + W;
+				move(0, 1);
 				break;
 			default: ;;
 		}
@@ -178,8 +151,8 @@ unsigned char main_loop(void) {
 int main (void) {
 	unsigned char i;
 
-	bgcolor(BLUE);
-	textcolor(WHITE);
+	fastbgcolor(BLACK);
+	textcolor(TEXTCOLOR);
 
 	for (i = 0; i < ML; ++i) {
 		do {

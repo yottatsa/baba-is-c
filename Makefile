@@ -9,7 +9,7 @@ CFLAGS  = -t $(CC65_TARGET) --standard c99 -Oi -Or -Os -Cl
 LDFLAGS = -t $(CC65_TARGET) -m $(PROG).map -Ln $(PROG).lbl
 else
 CC      = g++
-CFLAGS  = -Icompat
+CFLAGS  = -Icompat -Wno-narrowing
 LDFLAGS = -Wl,-Map,$(PROG).map
 endif
 
