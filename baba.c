@@ -14,11 +14,13 @@
 #include "resources.h"
 
 #define PROGRESS cputc(*".");
-#define BGCOLOR LIGHTBLUE
-#define TEXTCOLOR WHITE
 
 #ifndef __C64__
 #define DEBUG
+#endif
+
+#ifdef __C64__
+#define GRAPHIC
 #endif
 
 
@@ -108,69 +110,49 @@ void unpack_level(char *lv) {
 
 }
 
-#define TILE_INACTIVE DARKGRAY
-#define TILE_FLOOR DARKRED
-#define TILE_PLAYER WHITE
-#define TILE_FLAG YELLOW
-#define TILE_WIN TILE_FLAG
-#define TILE_WATER CYAN
-#define TILE_WALL ORANGE
-#define TILE_STOP TILE_WALL
-#define TILE_ROCK DARKGRAY
-#define TILE_PUSH TILE_ROCK
 void draw_screen(unsigned char draw_me) {
 	unsigned char i, x, y, tile, tile_index;
-	unsigned char *tile_str;
-
-#define draw_tile(t) \
-	tile_str = sprite_codes; \
-	tile_str += t; \
-	fastcputs(tile_str, 1);
 
 	// 905 print"{home}";:for n=0tomx:printgr$(pf%(n)and31);:next n
 	x = 0; y = 0;
+	fastgotoxy(x, y);
 	for (i = 0; i < MX; ++i) {
-		if (x == 0) fastgotoxy(x, y);
+		if (x == W) {
+			x = 0;
+			y++;
+		       	fastgotoxy(x, y);
+		}
 		tile = pfbm[i];
 
 		// get code tile
 		tile_index = pf[i] & 31; 
-		fasttextcolor(TILE_INACTIVE);
-
-		// decode tile bitmap:
 		if (tile & 1 << 0) tile_index = 0;
-		if (tile & 1 << 1) tile_index = 1;
-		if (tile & 1 << 2) { tile_index = 2; fasttextcolor(TILE_ROCK | 0xA0);}
-		if (tile & 1 << 3) tile_index = 3;
-		if (tile & 1 << 4) tile_index = 4;
-		if (tile & 1 << WATER) { tile_index = WATER; fasttextcolor(TILE_WATER);}
-		if (tile & 1 << 6) tile_index = 6;
-		if (tile & 1 << 7) tile_index = 7;
+		else if (tile & 1 << 1) tile_index = 1;
+		else if (tile & 1 << 2) tile_index = 2;
+		else if (tile & 1 << 3) tile_index = 3;
+		else if (tile & 1 << 4) tile_index = 4;
+		else if (tile & 1 << WATER) tile_index = WATER;
+		else if (tile & 1 << 6) tile_index = 6;
+		else if (tile & 1 << 7) tile_index = 7;
 
 		// decode tile functions
 		if (is_stop(tile)) {
-			fasttextcolor(TILE_STOP);
 			tile_index = props[STOP];
 		}
 		if (is_push(tile)) {
-			fasttextcolor(TILE_PUSH);
 			tile_index = props[PUSH];
 		}
 		if (is_win(tile)) {
-			fasttextcolor(TILE_WIN);
 			tile_index = props[WIN];
 		}
 		if (is_you(tile)) {
-			if (draw_me) fasttextcolor(TILE_PLAYER);
+			// if (draw_me) fasttextcolor(TILE_PLAYER);  //todo
 			tile_index = props[YOU];
 		}
 
-		draw_tile(tile_index);
+		fasttextcolor(sprites_colors[tile_index + tile_index]);
+		fastcputc(&sprite_codes[tile_index]);
 		x++;
-		if (x == W) {
-			x = 0;
-			y++;
-		}
 	}
 	textcolor(TEXTCOLOR);
 }
@@ -213,6 +195,7 @@ char update(char my_position, signed char shift) {
 	unsigned char me = pfbm[my_position];
 	unsigned char neigh = pfbm[my_position + shift];
 	unsigned char act = 0, prop = 0;
+	
 	if (neigh & 1 << 0) act = act | 1 << objs[0];
 	if (neigh & 1 << 1) act = act | 1 << objs[1];
 	if (neigh & 1 << 2) act = act | 1 << objs[2];
@@ -226,7 +209,7 @@ char update(char my_position, signed char shift) {
 	gotoxy(0, H+6);
 	printf("%2d, %3d, 0x%3x 0x%3x", my_position, shift, neigh, act);
 #endif
-	// swap me
+
 	if (act & 1 << WIN) {
 		win();
 		return 0;
@@ -266,8 +249,9 @@ unsigned char main_loop(void) {
 #endif
 	is_alive = 1;
 	is_won = 0;
+	calculate(); // speed debug only
 	while (is_won == 0) {
-		calculate();
+		//calculate();
 		draw_screen(is_alive);
 		
 
@@ -320,7 +304,7 @@ unsigned char main_loop(void) {
 #define CIA2_SET_BANK(x) CIA2.ddra = CIA2.ddra | 0x03; CIA2.pra = CIA2.pra & ~x
 unsigned char *chargen = (void*)0x3000;
 
-void set_char(void) {
+void set_graphic_mode(void) {
 	unsigned char *origchargen = (void*)0xd000;
 
 	/* https://www.c64-wiki.com/wiki/CIA
@@ -357,8 +341,14 @@ void set_char(void) {
 	 */
 	// VIC.addr = (VIC.addr & 0x0F) | 0xC0; // b1100.... -> screen memory 0xf000
 	// VIC.addr = (VIC.addr & 0xF0) | 0x0E; // b....1110 -> char memory ??
-	//VIC.addr = 28;
 	VIC.addr = (VIC.addr & 240) | 12;
+	
+	/* https://www.c64-wiki.com/wiki/Standard_Character_Mode
+	 * In Control Register 1 ($d011) bit 6 (ECM) must be cleared and bit 5 (BMM) must be cleared. In Control Register 2 ($d016), bit 4 (MCM) must be cleared. 
+	 */
+	// ECM
+	VIC.ctrl2 = VIC.ctrl2 & ~(1 << 4);
+	VIC.ctrl1 = (VIC.ctrl1 & ~(1 << 5)) | (1 << 6);
 }
 #endif
 
@@ -366,18 +356,26 @@ void set_char(void) {
 int main (void) {
 	unsigned char i;
 
-	sprite_codes = (unsigned char*) malloc(32);
-	for (i = 0; i < 32; ++i) {
-		sprite_codes[i] = (unsigned char) i+64;
-	}
-
-#ifdef __C64__
-	set_char();
-	memcpy(chargen + 64 * 8, sprites, 256);
-#endif
-
 	fastbgcolor(BGCOLOR);
 	textcolor(TEXTCOLOR);
+
+	sprite_codes = (unsigned char*) malloc(32);
+	for (i = 0; i < 32; ++i) {
+		sprite_codes[i] = (unsigned char) i+32;
+#ifdef GRAPHIC
+		sprite_codes[i] = bgcolormask(sprites_colors[i + i + 1], sprite_codes[i]);
+#endif
+	}
+
+#ifdef GRAPHIC
+	VIC.bgcolor1 = BGCOLOR1;
+	VIC.bgcolor2 = BGCOLOR2;
+	VIC.bgcolor3 = BGCOLOR3;
+
+	set_graphic_mode();
+
+	memcpy(chargen + 32 * 8, sprites, 256);
+#endif
 
 	for (i = 0; i < ML; ++i) {
 		do {

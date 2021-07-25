@@ -1,5 +1,5 @@
-// Fast conio
 #include <conio.h>
+#include "binliteral.h"
 
 #ifndef _FASTCONIO_H
 #define _FASTCONIO_H
@@ -12,16 +12,13 @@
 // C64
 #include <c64.h>
 #define TEXT_RAM       ((unsigned char*)0x0400)
-#define BG_COLOR       ((unsigned char*)0xD021)
 
 unsigned char *_textptr;
 unsigned char *_colorptr;
-unsigned char *_bgcolorptr = BG_COLOR;
 unsigned char _fgcolor, _bgcolor;
 #define fastgotoxy(x, y) _textptr = TEXT_RAM + x + y * SCREEN_WIDTH; _colorptr = COLOR_RAM + x + y * SCREEN_WIDTH;
-#define fastshiftxy(x, y) _textptr = _textptr + x +y * SCREEN_WIDTH; _colorptr = _colorptr + x + y * SCREEN_WIDTH;
 #define fasttextcolor(c) _fgcolor = c;
-#define fastbgcolor(c) *(_bgcolorptr) = c;
+#define fastbgcolor(c) VIC.bgcolor0 = c; // for stdchr
 #define fastcputs(s, l) { \
 	unsigned char i; \
 	for (i = 0; i < l; ++i) { \
@@ -29,10 +26,11 @@ unsigned char _fgcolor, _bgcolor;
 		*(_colorptr++) = _fgcolor; \
 	} \
 }
-#define fastcputc(c) { \
+#define fastcputc(c) \
 	*(_textptr++) = *(c); \
-	*(_colorptr++) = _fgcolor; \
-}
+	*(_colorptr++) = _fgcolor;
+
+#define bgcolormask(m, c) ((c & BYTE(0011,1111)) | m)
 
 #define BLACK		COLOR_BLACK
 #define WHITE		COLOR_WHITE
@@ -44,13 +42,18 @@ unsigned char _fgcolor, _bgcolor;
 #define BLUE		COLOR_BLUE
 #define YELLOW		COLOR_YELLOW
 #define ORANGE		COLOR_ORANGE
-//#define COLOR_BROWN
+#define BROWN		COLOR_BROWN
 //#define COLOR_LIGHTRED
 #define DARKGRAY	COLOR_GRAY1
 //#define COLOR_GRAY2
 //#define COLOR_LIGHTGREEN
 #define LIGHTBLUE	COLOR_LIGHTBLUE
 #define LIGHTGRAY	COLOR_GRAY3
+
+#define BGCOLORMASK0	BYTE(0000,0000)
+#define BGCOLORMASK1	BYTE(0100,0000)
+#define BGCOLORMASK2	BYTE(1000,0000)
+#define BGCOLORMASK3	BYTE(1100,0000)
 
 #endif
 

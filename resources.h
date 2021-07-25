@@ -1,29 +1,79 @@
-#define B8(d) ((unsigned char)B8__(HEX__(d)))
-#define B_0000    0
-#define B_0001    1
-#define B_0010    2
-#define B_0011    3
-#define B_0100    4
-#define B_0101    5
-#define B_0110    6
-#define B_0111    7
-#define B_1000    8
-#define B_1001    9
-#define B_1010    a
-#define B_1011    b
-#define B_1100    c
-#define B_1101    d
-#define B_1110    e
-#define B_1111    f
+/* graphical resources for baba-is-c
+ * code: @yottatsa
+ * art:  @nina-kali-nina
+ * based on original art for baba is you
+ */
 
-#define _B2H(bits)    B_##bits
-#define B2H(bits)    _B2H(bits)
-#define _HEX(n)        0x##n
-#define HEX(n)        _HEX(n)
-#define _CCAT(a,b)    a##b
-#define CCAT(a,b)   _CCAT(a,b)
+#include "binliteral.h"
+#include "fastconio.h"
 
-#define BYTE(a,b)        HEX( CCAT(B2H(a),B2H(b)) )
+#define BGCOLOR LIGHTBLUE
+#define TEXTCOLOR WHITE
+
+#define	C_BABA		WHITE
+#define	C_ROCK		DARKGRAY
+#define	C_WALL		BROWN
+#define C_FLAG		YELLOW
+#define C_WATER		BLUE
+#define C_KEY		YELLOW
+#define C_DOOR		LIGHTGRAY
+#define C_STOP		WHITE
+#define C_PUSH		BLACK
+#define C_IS		CYAN
+
+#define C_YOU		C_BABA
+#define C_WIN		C_FLAG
+
+
+#define BGCOLOR1	BLUE
+#define BGCOLOR2	ORANGE
+#define BGCOLOR3	YELLOW
+
+#define C_BG		BGCOLORMASK0 // LIGHTBLUE	BGCOLOR
+#define C_DOORBG	BGCOLORMASK1 // BLLUE
+#define C_YOUBG		BGCOLORMASK1 // BLLUE
+#define C_WINBG		BGCOLORMASK1 // BLLUE
+#define C_WALLBG	BGCOLORMASK2 // ORANGE
+#define C_PUSHBG	BGCOLORMASK3 //	YELLOW
+
+#define C_STOPBG	C_WALLBG
+
+unsigned char sprites_colors[] = {
+	0,		0,		// 0
+	C_BABA,		C_BG,		// baba icon
+	C_ROCK,		C_BG,		// rock icon
+	C_WALL,		C_WALLBG,	// wall icon
+	C_FLAG,		C_BG,		// flag icon
+	C_WATER, 	C_BG,		// water icon
+	C_KEY,		C_BG,		// key icon
+	C_DOOR,		C_DOORBG,	// door icon
+	
+	0,		0,		// 8
+	C_BABA,		C_BG,		// baba
+	C_ROCK,		C_BG,		// rock
+	C_WALL,		C_BG,		// wall
+	C_FLAG,		C_BG,		// flag
+	C_WATER,	C_BG,		// water
+	C_KEY,		C_BG,		// key
+	C_DOOR,		C_BG,		// door
+	
+	C_YOU,		C_YOUBG,	// you
+	C_WIN,		C_WINBG,	// win
+	C_STOP,		C_STOPBG,	// stop
+	C_PUSH,		C_PUSHBG,	// push
+	0,		0,		// shut
+	0,		0,		// open
+	0,		0,		// sink
+	0,		0,		// lose
+	0,		0,		// hot
+	0,		0,		// melt
+	0,		0,		// 26
+	0,		0,		// 27
+	0,		0,		// 28
+	0,		0,		// 29
+	0,		0,		// has
+	C_IS,		C_BG,		// is
+};
 
 unsigned char sprites[] = {
 	// ....
@@ -187,44 +237,44 @@ unsigned char sprites[] = {
 	BYTE(0000,0000),
 
 	// you
-	BYTE(0101,0001),
-	BYTE(0001,0101),
-	BYTE(1011,0001),
-	BYTE(1111,1111),
-	BYTE(1101,0111),
-	BYTE(1101,0111),
-	BYTE(1100,0111),
-	BYTE(1111,1111),
+	~BYTE(0101,0001),
+	~BYTE(0001,0101),
+	~BYTE(1011,0001),
+	~BYTE(1111,1111),
+	~BYTE(1101,0111),
+	~BYTE(1101,0111),
+	~BYTE(1100,0111),
+	~BYTE(1111,1111),
 
 	// win
-	BYTE(0101,0001),
-	BYTE(0001,1011),
-	BYTE(0001,0001),
-	BYTE(1111,1111),
-	BYTE(1100,1111),
-	BYTE(1101,0111),
-	BYTE(1101,0111),
-	BYTE(1111,1111),
+	~BYTE(0101,0001),
+	~BYTE(0001,1011),
+	~BYTE(0001,0001),
+	~BYTE(1111,1111),
+	~BYTE(1100,1111),
+	~BYTE(1101,0111),
+	~BYTE(1101,0111),
+	~BYTE(1111,1111),
 
 	// stop
-	BYTE(1001,0001),
-	BYTE(1011,1011),
-	BYTE(0011,1011),
-	BYTE(1111,1111),
-	BYTE(0001,0001),
-	BYTE(0101,0001),
-	BYTE(0001,0111),
-	BYTE(1111,1111),
+	~BYTE(1001,0001),
+	~BYTE(1011,1011),
+	~BYTE(0011,1011),
+	~BYTE(1111,1111),
+	~BYTE(0001,0001),
+	~BYTE(0101,0001),
+	~BYTE(0001,0111),
+	~BYTE(1111,1111),
 
 	// push
-	BYTE(0001,0101),
-	BYTE(0001,0101),
-	BYTE(0111,0001),
-	BYTE(1111,1111),
-	BYTE(1001,0101),
-	BYTE(1011,0001),
-	BYTE(0011,0101),
-	BYTE(1111,1111),
+	~BYTE(0001,0101),
+	~BYTE(0001,0101),
+	~BYTE(0111,0001),
+	~BYTE(1111,1111),
+	~BYTE(1001,0101),
+	~BYTE(1011,0001),
+	~BYTE(0011,0101),
+	~BYTE(1111,1111),
 
 	// lock/shut
 	BYTE(0111,0001),
