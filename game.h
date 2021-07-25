@@ -17,7 +17,6 @@
 
 // 40 dim gr$(31):rem gfx tiles 4x1
 
-static unsigned char _sprites[] = "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_";
 
 
 static char gr[32][5] = {

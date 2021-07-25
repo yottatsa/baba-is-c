@@ -12,11 +12,11 @@
 // C64
 #include <c64.h>
 #define TEXT_RAM       ((unsigned char*)0x0400)
-#define BGCOLOR        ((unsigned char*)0xD021)
+#define BG_COLOR       ((unsigned char*)0xD021)
 
 unsigned char *_textptr;
 unsigned char *_colorptr;
-unsigned char *_bgcolorptr = BGCOLOR;
+unsigned char *_bgcolorptr = BG_COLOR;
 unsigned char _fgcolor, _bgcolor;
 #define fastgotoxy(x, y) _textptr = TEXT_RAM + x + y * SCREEN_WIDTH; _colorptr = COLOR_RAM + x + y * SCREEN_WIDTH;
 #define fastshiftxy(x, y) _textptr = _textptr + x +y * SCREEN_WIDTH; _colorptr = _colorptr + x + y * SCREEN_WIDTH;
@@ -37,7 +37,7 @@ unsigned char _fgcolor, _bgcolor;
 #define BLACK		COLOR_BLACK
 #define WHITE		COLOR_WHITE
 #define RED		COLOR_RED
-//#define COLOR_CYAN
+#define CYAN		COLOR_CYAN
 //#define COLOR_VIOLET
 //#define COLOR_PURPLE
 #define GREEN		COLOR_GREEN

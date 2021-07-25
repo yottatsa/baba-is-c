@@ -11,8 +11,10 @@
 
 #include "fastconio.h"
 #include "game.h"
+#include "resources.h"
 
 #define PROGRESS cputc(*".");
+#define BGCOLOR LIGHTBLUE
 #define TEXTCOLOR WHITE
 
 #ifndef __C64__
@@ -25,7 +27,7 @@ unsigned char pf[MX], pfbm[MX];
 unsigned char props[16];
 unsigned char objs[8];
 unsigned char p_you, p_stop, p_win, p_push, is_alive, is_won;
-unsigned char *sprites;
+unsigned char *sprite_codes;
 #define is_you(v) (v & p_you)
 #define is_stop(v) (v & p_stop)
 #define is_win(v) (v & p_win)
@@ -109,17 +111,19 @@ void unpack_level(char *lv) {
 #define TILE_INACTIVE DARKGRAY
 #define TILE_FLOOR DARKRED
 #define TILE_PLAYER WHITE
-#define TILE_WIN GREEN
-#define TILE_WATER LIGHTBLUE
-#define TILE_STOP LIGHTGRAY
-#define TILE_PUSH ORANGE
-#define TILE_ROCK ORANGE
+#define TILE_FLAG YELLOW
+#define TILE_WIN TILE_FLAG
+#define TILE_WATER CYAN
+#define TILE_WALL ORANGE
+#define TILE_STOP TILE_WALL
+#define TILE_ROCK DARKGRAY
+#define TILE_PUSH TILE_ROCK
 void draw_screen(unsigned char draw_me) {
 	unsigned char i, x, y, tile, tile_index;
 	unsigned char *tile_str;
 
 #define draw_tile(t) \
-	tile_str = sprites; \
+	tile_str = sprite_codes; \
 	tile_str += t; \
 	fastcputs(tile_str, 1);
 
@@ -133,10 +137,10 @@ void draw_screen(unsigned char draw_me) {
 		tile_index = pf[i] & 31; 
 		fasttextcolor(TILE_INACTIVE);
 
-		// decode tile bitmap
+		// decode tile bitmap:
 		if (tile & 1 << 0) tile_index = 0;
 		if (tile & 1 << 1) tile_index = 1;
-		if (tile & 1 << 2) { tile_index = 2; fasttextcolor(TILE_ROCK);}
+		if (tile & 1 << 2) { tile_index = 2; fasttextcolor(TILE_ROCK | 0xA0);}
 		if (tile & 1 << 3) tile_index = 3;
 		if (tile & 1 << 4) tile_index = 4;
 		if (tile & 1 << WATER) { tile_index = WATER; fasttextcolor(TILE_WATER);}
@@ -358,22 +362,21 @@ void set_char(void) {
 }
 #endif
 
+
 int main (void) {
 	unsigned char i;
 
-	sprites = (unsigned char*) malloc(32);
+	sprite_codes = (unsigned char*) malloc(32);
 	for (i = 0; i < 32; ++i) {
-		sprites[i] = (unsigned char) i+64;
+		sprite_codes[i] = (unsigned char) i+64;
 	}
 
 #ifdef __C64__
 	set_char();
-	for (i = 0; i < 32; ++i) {
-		memset(chargen + (i + 64)*8, 255, 8);
-	}
+	memcpy(chargen + 64 * 8, sprites, 256);
 #endif
 
-	fastbgcolor(BLACK);
+	fastbgcolor(BGCOLOR);
 	textcolor(TEXTCOLOR);
 
 	for (i = 0; i < ML; ++i) {
