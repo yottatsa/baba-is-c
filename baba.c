@@ -25,6 +25,7 @@ unsigned char pf[MX], pfbm[MX];
 unsigned char props[16];
 unsigned char objs[8];
 unsigned char p_you, p_stop, p_win, p_push, is_alive, is_won;
+unsigned char *sprites;
 #define is_you(v) (v & p_you)
 #define is_stop(v) (v & p_stop)
 #define is_win(v) (v & p_win)
@@ -114,49 +115,58 @@ void unpack_level(char *lv) {
 #define TILE_PUSH ORANGE
 #define TILE_ROCK ORANGE
 void draw_screen(unsigned char draw_me) {
-	unsigned char i, tile;
-	char *tile_str;
+	unsigned char i, x, y, tile, tile_index;
+	unsigned char *tile_str;
+
+#define draw_tile(t) \
+	tile_str = sprites; \
+	tile_str += t; \
+	fastcputs(tile_str, 1);
 
 	// 905 print"{home}";:for n=0tomx:printgr$(pf%(n)and31);:next n
-	fastgotoxy(0, 0);
-	fasttextcolor(TILE_INACTIVE);
+	x = 0; y = 0;
 	for (i = 0; i < MX; ++i) {
+		if (x == 0) fastgotoxy(x, y);
 		tile = pfbm[i];
 
 		// get code tile
-		tile_str = (char *) gr[pf[i] & 31]; 
+		tile_index = pf[i] & 31; 
 		fasttextcolor(TILE_INACTIVE);
 
 		// decode tile bitmap
-		if (tile & 1 << 0) tile_str = (char *) gr[0];
-		if (tile & 1 << 1) tile_str = (char *) gr[1];
-		if (tile & 1 << 2) { tile_str = (char *) gr[2]; fasttextcolor(TILE_ROCK);}
-		if (tile & 1 << 3) tile_str = (char *) gr[3];
-		if (tile & 1 << 4) tile_str = (char *) gr[4];
-		if (tile & 1 << WATER) { tile_str = (char *) gr[WATER]; fasttextcolor(TILE_WATER);}
-		if (tile & 1 << 6) tile_str = (char *) gr[6];
-		if (tile & 1 << 7) tile_str = (char *) gr[7];
+		if (tile & 1 << 0) tile_index = 0;
+		if (tile & 1 << 1) tile_index = 1;
+		if (tile & 1 << 2) { tile_index = 2; fasttextcolor(TILE_ROCK);}
+		if (tile & 1 << 3) tile_index = 3;
+		if (tile & 1 << 4) tile_index = 4;
+		if (tile & 1 << WATER) { tile_index = WATER; fasttextcolor(TILE_WATER);}
+		if (tile & 1 << 6) tile_index = 6;
+		if (tile & 1 << 7) tile_index = 7;
 
 		// decode tile functions
 		if (is_stop(tile)) {
 			fasttextcolor(TILE_STOP);
-			tile_str = (char *) gr[props[STOP]];
+			tile_index = props[STOP];
 		}
 		if (is_push(tile)) {
 			fasttextcolor(TILE_PUSH);
-			tile_str = (char *) gr[props[PUSH]];
+			tile_index = props[PUSH];
 		}
 		if (is_win(tile)) {
 			fasttextcolor(TILE_WIN);
-			tile_str = (char *) gr[props[WIN]];
+			tile_index = props[WIN];
 		}
 		if (is_you(tile)) {
 			if (draw_me) fasttextcolor(TILE_PLAYER);
-			tile_str = (char *) gr[props[YOU]];
+			tile_index = props[YOU];
 		}
 
-
-		fastcputs(tile_str, 4);
+		draw_tile(tile_index);
+		x++;
+		if (x == W) {
+			x = 0;
+			y++;
+		}
 	}
 	textcolor(TEXTCOLOR);
 }
@@ -294,8 +304,74 @@ unsigned char main_loop(void) {
 	return 0;
 }
 
+#ifdef __C64__
+
+#define PROCESSOR_PORT				*((unsigned char*)0x01)
+#define PROCESSOR_PORT_IOCHAR_VISIBILITY	0x04
+#define CIA1_CRA_TIMER				0x01
+
+/* https://www.c64-wiki.com/wiki/VIC_bank https://sta.c64.org/cbm64mem.html
+ * Make sure bits 0 and 1 are set to outputs and change banks
+ */
+#define CIA2_SET_BANK(x) CIA2.ddra = CIA2.ddra | 0x03; CIA2.pra = CIA2.pra & ~x
+unsigned char *chargen = (void*)0x3000;
+
+void set_char(void) {
+	unsigned char *origchargen = (void*)0xd000;
+
+	/* https://www.c64-wiki.com/wiki/CIA
+	 * Turn off interrupts
+	 */
+	CIA1.cra = CIA1.cra & ~CIA1_CRA_TIMER;
+
+	/* https://sta.c64.org/cbm64mem.html
+	 * Make Character ROM visible at $D000-$DFFF.
+	 */
+	PROCESSOR_PORT = PROCESSOR_PORT & ~PROCESSOR_PORT_IOCHAR_VISIBILITY;
+
+	// Copy character set from ROM to RAM
+	memcpy(chargen, origchargen, 1024); 
+
+	/* https://sta.c64.org/cbm64mem.html
+	 * Restore I/O area visible at $D000-$DFFF.
+	 */
+	PROCESSOR_PORT = PROCESSOR_PORT | PROCESSOR_PORT_IOCHAR_VISIBILITY;
+	
+	// Turn on interrupts
+	CIA1.cra = CIA1.cra | CIA1_CRA_TIMER;
+
+	/* https://www.c64-wiki.com/wiki/VIC_bank https://sta.c64.org/cbm64mem.html
+	 * 3: $C000–$FFFF
+	 */
+	//CIA2_SET_BANK(0x03);
+
+	/* https://www.c64-wiki.com/wiki/53272 https://sta.c64.org/cbm64mem.html
+	 * When in text screen mode, the VIC-II looks to 53272 for information on where the character set and text screen character RAM is located:
+	 * - The four most significant bits form a 4-bit number in the range 0 thru 15: Multiplied with 1024 this gives the start address for the screen character RAM.
+	 * - Bits 1 thru 3 (weights 2 thru 8) form a 3-bit number in the range 0 thru 7: Multiplied with 2048 this gives the start address for the character set.
+	 * Notice that all the start addresses of character sets, screen character RAM, bitmaps, and color information, are all relative to the start address of the current VIC bank!.
+	 */
+	// VIC.addr = (VIC.addr & 0x0F) | 0xC0; // b1100.... -> screen memory 0xf000
+	// VIC.addr = (VIC.addr & 0xF0) | 0x0E; // b....1110 -> char memory ??
+	//VIC.addr = 28;
+	VIC.addr = (VIC.addr & 240) | 12;
+}
+#endif
+
 int main (void) {
 	unsigned char i;
+
+	sprites = (unsigned char*) malloc(32);
+	for (i = 0; i < 32; ++i) {
+		sprites[i] = (unsigned char) i+64;
+	}
+
+#ifdef __C64__
+	set_char();
+	for (i = 0; i < 32; ++i) {
+		memset(chargen + (i + 64)*8, 255, 8);
+	}
+#endif
 
 	fastbgcolor(BLACK);
 	textcolor(TEXTCOLOR);

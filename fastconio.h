@@ -19,14 +19,19 @@ unsigned char *_colorptr;
 unsigned char *_bgcolorptr = BGCOLOR;
 unsigned char _fgcolor, _bgcolor;
 #define fastgotoxy(x, y) _textptr = TEXT_RAM + x + y * SCREEN_WIDTH; _colorptr = COLOR_RAM + x + y * SCREEN_WIDTH;
+#define fastshiftxy(x, y) _textptr = _textptr + x +y * SCREEN_WIDTH; _colorptr = _colorptr + x + y * SCREEN_WIDTH;
 #define fasttextcolor(c) _fgcolor = c;
 #define fastbgcolor(c) *(_bgcolorptr) = c;
 #define fastcputs(s, l) { \
 	unsigned char i; \
 	for (i = 0; i < l; ++i) { \
-		*(_textptr++) = s[i]; \
+		*(_textptr++) = *(s++); \
 		*(_colorptr++) = _fgcolor; \
 	} \
+}
+#define fastcputc(c) { \
+	*(_textptr++) = *(c); \
+	*(_colorptr++) = _fgcolor; \
 }
 
 #define BLACK		COLOR_BLACK
@@ -56,9 +61,10 @@ unsigned char _fgcolor, _bgcolor;
 #define fasttextcolor(c) textcolor(c);
 #define fastbgcolor(c) bgcolor(c);
 #define fastcputs(s, l) { \
-	unsigned int w = SCREEN_WIDTH - wherex(); \
-	printf("%.*s%s", w, s, (l >= w) ? "\n" : ""); \
+	unsigned int x = wherex(); \
+	printf("%s%.*s", (x >= SCREEN_WIDTH) ? "\n" : "", l, s); \
 }
+#define fastcputc(c) cputc(*(c));
 
 #define ORANGE		RED
 #endif
