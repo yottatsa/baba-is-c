@@ -29,10 +29,23 @@ unsigned char _fgcolor, _bgcolor;
 	} \
 }
 
-#define YELLOW COLOR_YELLOW
-#define WHITE COLOR_WHITE
-#define DARKGRAY COLOR_GRAY1
-#define BLACK COLOR_BLACK
+#define BLACK		COLOR_BLACK
+#define WHITE		COLOR_WHITE
+#define RED		COLOR_RED
+//#define COLOR_CYAN
+//#define COLOR_VIOLET
+//#define COLOR_PURPLE
+#define GREEN		COLOR_GREEN
+#define BLUE		COLOR_BLUE
+#define YELLOW		COLOR_YELLOW
+#define ORANGE		COLOR_ORANGE
+//#define COLOR_BROWN
+//#define COLOR_LIGHTRED
+#define DARKGRAY	COLOR_GRAY1
+//#define COLOR_GRAY2
+//#define COLOR_LIGHTGREEN
+#define LIGHTBLUE	COLOR_LIGHTBLUE
+#define LIGHTGRAY	COLOR_GRAY3
 
 #endif
 
@@ -47,6 +60,7 @@ unsigned char _fgcolor, _bgcolor;
 	printf("%.*s%s", w, s, (l >= w) ? "\n" : ""); \
 }
 
+#define ORANGE		RED
 #endif
 
 #endif

@@ -6,6 +6,7 @@
 #define WIN 1
 #define STOP 2
 #define PUSH 3
+#define WATER 5
 
 /* 
  * 1. 2 maps: 7 + transparency layers bitmap, and code

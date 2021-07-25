@@ -1,6 +1,8 @@
 BABA IS C
 ---------
 
+![BABA](baba.png)
+
 based on ideas from [Nick Bensema][BABA-IS-C64], [Arvi "Hempuli" Teikari][BABA-IS-YOU]
 
 ## Trivia
