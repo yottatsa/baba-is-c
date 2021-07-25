@@ -15,10 +15,15 @@
 #define PROGRESS cputc(*".");
 #define TEXTCOLOR WHITE
 
+#ifndef __C64__
+#define DEBUG
+#endif
+
 
 // 25 dim pf%(mx):rem playfield map
-static unsigned char pf[MX];
-unsigned char you = 52;
+unsigned char pf[MX];
+unsigned char props[16];
+unsigned char objs[8];
 
 
 void unpack_level(char *lv) {
@@ -87,19 +92,21 @@ void unpack_level(char *lv) {
 
 #define TILE_INACTIVE DARKGRAY
 #define TILE_ACTIVE YELLOW
-void draw_screen(void) {
-	unsigned char i;
-	char *tile;
+void draw_screen(unsigned char draw_me) {
+	unsigned char i, tile, you = props[0];
+	char *tile_str;
 
 	// 905 print"{home}";:for n=0tomx:printgr$(pf%(n)and31);:next n
 	fastgotoxy(0, 0);
 	fasttextcolor(TILE_INACTIVE);
 	for (i = 0; i < MX; ++i) {
-		tile = (char *) gr[pf[i] & 31];
-		if (i == you) fasttextcolor(TILE_ACTIVE);
-		fastcputs(tile, 4);
-		if (i == you) fasttextcolor(TILE_INACTIVE);
+		tile = pf[i] & 31;
+		tile_str = (char *) gr[pf[i] & 31];
+		if (draw_me && tile == you) fasttextcolor(TILE_ACTIVE);
+		fastcputs(tile_str, 4);
+		if (draw_me && tile == you) fasttextcolor(TILE_INACTIVE);
 	}
+	textcolor(TEXTCOLOR);
 }
 
 void win(void) {
@@ -114,33 +121,102 @@ void lose(void) {
 	cgetc();
 }
 
-void move(char x, char y) {
-	you = you + x + y * W;
+unsigned char calculate(void) {
+	unsigned char i, tile;
+	memset(props, 0, 16);
+	memset(objs, 0, 8);
+	for (i = 0; i < MX; ++i) {
+		tile = pf[i] & 31;
+		if (tile == IS) {
+			props[(pf[i + 1] & 31) - 16] = (pf[i - 1] & 31) - 8;
+			objs[(pf[i - 1] & 31) - 8] = (pf[i + 1] & 31) - 16;
+		}
+	}
+	if (props[0] == 0) return 0;
+	return 1;
+}
+
+char update(char my_position, signed char shift) {
+	unsigned char you = props[0];
+	unsigned char neigh = pf[my_position + shift];
+	unsigned char neigh_act = objs[neigh];
+	
+#ifdef DEBUG
+	gotoxy(0, H+6);
+	printf("%2d, %3d, %d, %d, %s", my_position, shift, neigh, neigh_act, gr[neigh_act + 16]);
+#endif
+	// swap me
+	switch (neigh_act) {
+		case WIN:
+			return 1;
+		case STOP:
+			break;
+		case YOU:
+			pf[my_position] = pf[my_position + shift]; // should be BG
+			pf[my_position + shift] = you;
+			break;
+		case PUSH:
+		default:
+			// should run checks recursively
+			pf[my_position] = pf[my_position + shift + shift]; // should be BG
+			pf[my_position + shift + shift] = pf[my_position + shift];
+			pf[my_position + shift] = props[0];
+			break;
+	}
+	return 0;
+}
+
+char move(signed char x, signed char y) {
+	signed char i;
+	unsigned you = props[0];
+	#define shift (signed char)(x + y * W)
+	#define tile(i) (pf[i] & 31)
+	#define check_and_call_update(i) if (tile(i) == you) if (update(i, shift) == 1) return 1;
+	if (shift > 0) {
+		for (i = MX - 1; i >= 0; --i) check_and_call_update(i)
+	} else if (shift < 0) {
+		for (i = 0; i < MX; ++i) check_and_call_update(i)
+	}
+	return 0;
 }
 
 unsigned char main_loop(void) {
-	unsigned char k;
+#define call_check_move(x, y) if (move(x, y) != 0) { win(); return 0; }
+	unsigned char k, i, alive;
 	while (1) {
-		draw_screen();
-		textcolor(TEXTCOLOR);
-		gotoxy(0, H+1);
-		printf(">");
+		alive = calculate();
+		draw_screen(alive);
+		
+
+#ifdef DEBUG
+		gotoxy(0, H+3);
+		for (i = 0; i < 8; ++i) {
+			printf("%s:%s %d ", gr[i], gr[objs[i]+16], objs[i]);
+		}
+#endif
+
+		if (alive == 0) {
+			lose();
+			return 1;
+		}
+
 		k = cgetc();
 		switch (k) {
 			case 'q':
-				win();
 				return 0;
+			case 'r':
+				return 1;
 			case 'a':
-				move(-1, 0);
+				call_check_move(-1, 0);
 				break;
 			case 'd': 
-				move(1, 0);
+				call_check_move(1, 0);
 				break;
 			case 'w': 
-				move(0, -1);
+				call_check_move(0, -1);
 				break;
 			case 's': 
-				move(0, 1);
+				call_check_move(0, 1);
 				break;
 			default: ;;
 		}

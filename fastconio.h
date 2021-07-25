@@ -19,7 +19,7 @@ unsigned char *_colorptr;
 unsigned char *_bgcolorptr = BGCOLOR;
 unsigned char _fgcolor, _bgcolor;
 #define fastgotoxy(x, y) _textptr = TEXT_RAM + x + y * SCREEN_WIDTH; _colorptr = COLOR_RAM + x + y * SCREEN_WIDTH;
-#define fasttextcolor(c) _fgcolor = c; textcolor(c);
+#define fasttextcolor(c) _fgcolor = c;
 #define fastbgcolor(c) *(_bgcolorptr) = c;
 #define fastcputs(s, l) { \
 	unsigned char i; \
