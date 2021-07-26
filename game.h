@@ -1,5 +1,5 @@
-#define W 10
-#define H 10
+#define W 13
+#define H 9
 #define MX H*W
 #define IS 31
 #define YOU 0
@@ -15,40 +15,41 @@
  * 4. objects are driven by code
  */
 
-// 40 dim gr$(31):rem gfx tiles 4x1
 
+#define EM 0
 
+// layers
+#define PL	1
+#define RK	2
+#define WL	3
+#define FG	4
 
-static char gr[32][5] = {
-	"....", ".ZZ.",
-	"****", "====",
-	"FLAG", "////",
-	"WWWW", "O -P",
-	// 9050 rem names 8-15
-	"  8 ", "baba",
-	"rock", "wall",
-	"flag", "watr",
-	"key ", "door",
-	// 9100 rem properties/verbs 16-31
-	// 9110 rem property is ru%(obj) and...
-	"you ",
-	"win!",
-	"stop",
-	"push",
-	"shut",
-	"open",
-	"sink",
-	"lose",
-	"hot ",
-	"melt",
-	" 26 ",
-	" 27 ",
-	" 28 ",
-	" 29 ",
-	"has ", " is ",
+// noun
+#define BA	9
+#define RO	10
+#define WA	11
+#define FL	12
+
+// adj/verb
+#define YO	16
+#define WI	17
+#define ST	18
+#define PU	19
+
+unsigned char l1[] = {
+	13,	9,	// W,H
+//	01  02  03  04  05  06  07  08  09  10  11  12  13		
+	BA, IS, YO, EM, EM, EM, EM, EM, EM, EM, FL, IS, WI,
+	EM, EM, EM, EM, EM, EM, EM, EM, EM, EM, EM, EM, EM,
+	WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL,
+	EM, EM, EM, EM, EM, EM, RK, EM, EM, EM, EM, EM, EM,
+	EM, PL, EM, EM, EM, EM, RK, EM, EM, EM, EM, FG, EM,
+	EM, EM, EM, EM, EM, EM, RK, EM, EM, EM, EM, EM, EM,
+	WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL,
+	EM, EM, EM, EM, EM, EM, EM, EM, EM, EM, EM, EM, EM,
+	WA, IS, ST, EM, EM, EM, EM, EM, EM, EM, RO, IS, PU,
 };
 
-char l1[] = {42, 201, 80, 33, 203, 82, 43, 67, 55, 33, 69, 51, 66, 69, 35, 69, 65, 69, 49, 66, 69, 49, 68, 33, 69, 51, 66, 69, 35, 67, 55, 43, 204, 81, 33, 202, 83, 0};
 char* levels[] = {
 	// 9270 rem level data - use "d" to create
 	l1,

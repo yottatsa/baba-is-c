@@ -1,8 +1,5 @@
 /*
  * baba-is-c -- a demake -- by yottatsa 2020
- *
- * Based on
- * 9 rem baba is c64 -- a demake -- by nick bensema 2019
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,8 +9,6 @@
 #include "fastconio.h"
 #include "game.h"
 #include "resources.h"
-
-#define PROGRESS cputc(*".");
 
 #ifndef __C64__
 #define DEBUG
@@ -39,72 +34,18 @@ unsigned char *sprite_codes;
 void unpack_level(char *lv) {
 	unsigned char i, x, t, tile;
 
-	// 119 for x=0 to mx:pf%(x)=0:next x
 	memset(pf, 0, MX);
-	PROGRESS
+	memset(pfbm, 0, MX);
+	lv++; //W
+	lv++; //H
 
-	// 120 i=0
-	// 135 x=1
-	i = 0;
-	x = 0;
-
-	// 140 t=asc(mid$(lv$,x,1))
-	t = (int) lv[x];
-
-	// 155 i=i+1:x=x+1:ifx<=len(lv$)andi<mxthen 140
-	while (t != 0 && i < MX) {
-		/*
-		if ('a' <= t && t <= 'z') t = t - 32;
-		else if ('A' <= t && t <= 'Z') t = t + 128;
-		if (t == 126) t = 255;
-		*/
-		
-		// 141 ift=191then l2=l2+1:goto 120
-		if (t == 191) return;
-
-		// 144 ift=255thent=34
-		if (t == 255) t = 34;
-
-		// 145 ift>=64 then pf%(i)=31andt:ift>128theni=i+1:pf%(i)=is
-		if (t >= 64) {
-			pf[i] = 31 & t;
-			if (t > 128) {
-				i = i + 1;
-				pf[i] = IS;
-			}
-		}
-
-		// 147 ift>32 and t<48 and i<mx then pf%(i)=0:i=i+1:t=t-1:goto 147
-		while (t > 32 && t < 48 && i < MX) {
-			pf[i] = 0;
-			i = i + 1;
-			t = t - 1;
-		}
-
-		// 150 ift>48andt<64andi<mxthenpf%(i)=pf%(i-1):ift>49theni=i+1:t=t-1:goto150
-		if (t > 48 && t < 64 && i < MX) {
-			while (t > 49) {
-				if (t > 48 && t < 64 && i < MX) pf[i] = pf[i-1];
-				i = i + 1;
-				t = t - 1;
-			}
-		}
-
-		// 155 i=i+1:x=x+1:ifx<=len(lv$)andi<mxthen 140
-		i = i + 1;
-		x = x + 1;
-
-		// 140 t=asc(mid$(lv$,x,1))
-		t = (int) lv[x];
-		PROGRESS
-	}
-	
 	// move object to bitmap layers, leaving only code in the indexed layer
 	for (i = 0; i < MX; ++i) {
-		tile = pf[i] & 31;
+		tile = lv[i];
 		if (tile < 8) {
 			pfbm[i] = (1 << tile);
-			pf[i] = 0;
+		} else {
+			pf[i] = tile;
 		}
 	}
 
@@ -113,7 +54,6 @@ void unpack_level(char *lv) {
 void draw_screen(unsigned char draw_me) {
 	unsigned char i, x, y, tile, tile_index;
 
-	// 905 print"{home}";:for n=0tomx:printgr$(pf%(n)and31);:next n
 	x = 0; y = 0;
 	fastgotoxy(x, y);
 	for (i = 0; i < MX; ++i) {
@@ -254,17 +194,6 @@ unsigned char main_loop(void) {
 		//calculate();
 		draw_screen(is_alive);
 		
-
-#ifdef DEBUG
-		gotoxy(0, H+3);
-		for (i = 0; i < 8; ++i) {
-			printf("%s:%s %d ", gr[i], gr[objs[i]+16], objs[i]);
-		}
-		gotoxy(0, H+4);
-		for (i = 0; i < 16; ++i) {
-			printf("%d:%s %d ", i, gr[props[i]], props[i]);
-		}
-#endif
 
 		if (is_alive == 0) return 1;
 
