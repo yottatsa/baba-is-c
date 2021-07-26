@@ -24,6 +24,7 @@ unsigned char pf[MX], pfbm[MX];
 unsigned char props[16];
 unsigned char objs[8];
 unsigned char p_you, p_stop, p_win, p_push, is_alive, is_won;
+unsigned char left, top, right, width, height;
 unsigned char *sprite_codes;
 #define is_you(v) (v & p_you)
 #define is_stop(v) (v & p_stop)
@@ -32,12 +33,17 @@ unsigned char *sprite_codes;
 
 
 void unpack_level(char *lv) {
-	unsigned char i, x, t, tile;
+	unsigned char i, tile;
+
+	width = *(lv++);
+	height = *(lv++);
 
 	memset(pf, 0, MX);
 	memset(pfbm, 0, MX);
-	lv++; //W
-	lv++; //H
+
+	left = SCREEN_WIDTH / 2 - width / 2;
+	right = left + width;
+	top = SCREEN_HEIGHT / 2 - height / 2;
 
 	// move object to bitmap layers, leaving only code in the indexed layer
 	for (i = 0; i < MX; ++i) {
@@ -54,11 +60,11 @@ void unpack_level(char *lv) {
 void draw_screen(unsigned char draw_me) {
 	unsigned char i, x, y, tile, tile_index;
 
-	x = 0; y = 0;
+	x = left; y = top;
 	fastgotoxy(x, y);
 	for (i = 0; i < MX; ++i) {
-		if (x == W) {
-			x = 0;
+		if (x == right) {
+			x = left;
 			y++;
 		       	fastgotoxy(x, y);
 		}
@@ -215,6 +221,12 @@ unsigned char main_loop(void) {
 			case 's': 
 				move(0, 1);
 				break;
+			case '1':
+				VIC.addr = (VIC.addr & BYTE(1111,0000)) | BYTE(0000,1100);
+				break;
+			case '2':
+				VIC.addr = (VIC.addr & BYTE(1111,0000)) | BYTE(0000,1110);
+				break;
 			default: ;;
 		}
 	}
@@ -231,10 +243,16 @@ unsigned char main_loop(void) {
  * Make sure bits 0 and 1 are set to outputs and change banks
  */
 #define CIA2_SET_BANK(x) CIA2.ddra = CIA2.ddra | 0x03; CIA2.pra = CIA2.pra & ~x
-unsigned char *chargen = (void*)0x3000;
+
+unsigned char *chargena;
+extern unsigned char _CHARSETA_START__;
+unsigned char *chargenb;
+extern unsigned char _CHARSETB_START__;
 
 void set_graphic_mode(void) {
 	unsigned char *origchargen = (void*)0xd000;
+	chargena = &_CHARSETA_START__;
+	chargenb = &_CHARSETB_START__;
 
 	/* https://www.c64-wiki.com/wiki/CIA
 	 * Turn off interrupts
@@ -247,7 +265,8 @@ void set_graphic_mode(void) {
 	PROCESSOR_PORT = PROCESSOR_PORT & ~PROCESSOR_PORT_IOCHAR_VISIBILITY;
 
 	// Copy character set from ROM to RAM
-	memcpy(chargen, origchargen, 1024); 
+	memcpy(chargena, origchargen, 1024); 
+	memcpy(chargenb, origchargen, 1024); 
 
 	/* https://sta.c64.org/cbm64mem.html
 	 * Restore I/O area visible at $D000-$DFFF.
@@ -261,16 +280,6 @@ void set_graphic_mode(void) {
 	 * 3: $C000–$FFFF
 	 */
 	//CIA2_SET_BANK(0x03);
-
-	/* https://www.c64-wiki.com/wiki/53272 https://sta.c64.org/cbm64mem.html
-	 * When in text screen mode, the VIC-II looks to 53272 for information on where the character set and text screen character RAM is located:
-	 * - The four most significant bits form a 4-bit number in the range 0 thru 15: Multiplied with 1024 this gives the start address for the screen character RAM.
-	 * - Bits 1 thru 3 (weights 2 thru 8) form a 3-bit number in the range 0 thru 7: Multiplied with 2048 this gives the start address for the character set.
-	 * Notice that all the start addresses of character sets, screen character RAM, bitmaps, and color information, are all relative to the start address of the current VIC bank!.
-	 */
-	// VIC.addr = (VIC.addr & 0x0F) | 0xC0; // b1100.... -> screen memory 0xf000
-	// VIC.addr = (VIC.addr & 0xF0) | 0x0E; // b....1110 -> char memory ??
-	VIC.addr = (VIC.addr & 240) | 12;
 	
 	/* https://www.c64-wiki.com/wiki/Standard_Character_Mode
 	 * In Control Register 1 ($d011) bit 6 (ECM) must be cleared and bit 5 (BMM) must be cleared. In Control Register 2 ($d016), bit 4 (MCM) must be cleared. 
@@ -303,7 +312,16 @@ int main (void) {
 
 	set_graphic_mode();
 
-	memcpy(chargen + 32 * 8, sprites, 256);
+	memcpy(chargena + 32 * 8, sprites, 256);
+	memcpy(chargenb + 32 * 8, sprites, 256);
+
+	/* https://www.c64-wiki.com/wiki/53272 https://sta.c64.org/cbm64mem.html
+	 * When in text screen mode, the VIC-II looks to 53272 for information on where the character set and text screen character RAM is located:
+	 * - The four most significant bits form a 4-bit number in the range 0 thru 15: Multiplied with 1024 this gives the start address for the screen character RAM.
+	 * - Bits 1 thru 3 (weights 2 thru 8) form a 3-bit number in the range 0 thru 7: Multiplied with 2048 this gives the start address for the character set.
+	 * Notice that all the start addresses of character sets, screen character RAM, bitmaps, and color information, are all relative to the start address of the current VIC bank!.
+	 */
+	VIC.addr = (VIC.addr & BYTE(1111,0000)) | BYTE(0000,1100);
 #endif
 
 	for (i = 0; i < ML; ++i) {
