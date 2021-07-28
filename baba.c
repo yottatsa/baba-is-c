@@ -4,20 +4,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <conio.h>
 
 #include "fastconio.h"
 #include "game.h"
 #include "resources.h"
-
-#ifndef __C64__
-#define DEBUG
-#endif
-
-#ifdef __C64__
-#define GRAPHIC
-#endif
-
 
 // 25 dim pf%(mx):rem playfield map
 unsigned char pf[MX], pfbm[MX];
@@ -25,14 +15,14 @@ unsigned char props[16];
 unsigned char objs[8];
 unsigned char p_you, p_stop, p_win, p_push, is_alive, is_won;
 unsigned char left, top, right, width, height;
-unsigned char *sprite_codes;
+unsigned char sprite_codes[32];
 #define is_you(v) (v & p_you)
 #define is_stop(v) (v & p_stop)
 #define is_win(v) (v & p_win)
 #define is_push(v) (v & p_push)
 
 
-void unpack_level(char *lv) {
+void unpack_level(unsigned char *lv) {
 	unsigned char i, tile;
 
 	width = *(lv++);
@@ -105,14 +95,14 @@ void draw_screen(unsigned char draw_me) {
 
 void win(void) {
 	is_won = 1;
-	gotoxy(0, H+2);
+	gotoxy(0, 0);
 	printf("congratulations. press any for next\n");
 	cgetc();
 }
 
 void lose(void) {
 	is_alive = 0;
-	gotoxy(0, H+2);
+	gotoxy(0, 0);
 	printf("nothing is you. press any for repeat\n");
 	cgetc();
 }
@@ -151,11 +141,6 @@ char update(char my_position, signed char shift) {
 	if (neigh & 1 << 6) act = act | 1 << objs[6];
 	if (neigh & 1 << 7) act = act | 1 << objs[7];
 	
-#ifdef DEBUG
-	gotoxy(0, H+6);
-	printf("%2d, %3d, 0x%3x 0x%3x", my_position, shift, neigh, act);
-#endif
-
 	if (act & 1 << WIN) {
 		win();
 		return 0;
@@ -190,9 +175,6 @@ void move(signed char x, signed char y) {
 
 unsigned char main_loop(void) {
 	unsigned char k;
-#ifdef DEBUG
-	unsigned char i;
-#endif
 	is_alive = 1;
 	is_won = 0;
 	calculate(); // speed debug only
@@ -221,12 +203,14 @@ unsigned char main_loop(void) {
 			case 's': 
 				move(0, 1);
 				break;
+#ifdef __C64__
 			case '1':
 				VIC.addr = (VIC.addr & BYTE(1111,0000)) | BYTE(0000,1100);
 				break;
 			case '2':
 				VIC.addr = (VIC.addr & BYTE(1111,0000)) | BYTE(0000,1110);
 				break;
+#endif
 			default: ;;
 		}
 	}
@@ -287,33 +271,10 @@ void set_graphic_mode(void) {
 	// ECM
 	VIC.ctrl2 = VIC.ctrl2 & ~(1 << 4);
 	VIC.ctrl1 = (VIC.ctrl1 & ~(1 << 5)) | (1 << 6);
-}
-#endif
 
-
-int main (void) {
-	unsigned char i;
-
-	fastbgcolor(BGCOLOR);
-	textcolor(TEXTCOLOR);
-
-	sprite_codes = (unsigned char*) malloc(32);
-	for (i = 0; i < 32; ++i) {
-		sprite_codes[i] = (unsigned char) i+32;
-#ifdef GRAPHIC
-		sprite_codes[i] = bgcolormask(sprites_colors[i + i + 1], sprite_codes[i]);
-#endif
-	}
-
-#ifdef GRAPHIC
 	VIC.bgcolor1 = BGCOLOR1;
 	VIC.bgcolor2 = BGCOLOR2;
 	VIC.bgcolor3 = BGCOLOR3;
-
-	set_graphic_mode();
-
-	memcpy(chargena + 32 * 8, sprites, 256);
-	memcpy(chargenb + 32 * 8, sprites, 256);
 
 	/* https://www.c64-wiki.com/wiki/53272 https://sta.c64.org/cbm64mem.html
 	 * When in text screen mode, the VIC-II looks to 53272 for information on where the character set and text screen character RAM is located:
@@ -322,6 +283,44 @@ int main (void) {
 	 * Notice that all the start addresses of character sets, screen character RAM, bitmaps, and color information, are all relative to the start address of the current VIC bank!.
 	 */
 	VIC.addr = (VIC.addr & BYTE(1111,0000)) | BYTE(0000,1100);
+}
+#endif
+
+#ifdef __SPECTRUM__
+#include <sys/ioctl.h>                // required for querying system capabilites and for switching screen modes
+
+void set_graphic_mode(void) {
+	void *param = &sprites;
+	console_ioctl(IOCTL_GENCON_SET_UDGS, &param);
+        
+        // On the ZX Spectrum, we switch to 32 column mode
+        #if defined(__SPECTRUM__)
+                printf("%c%c",1,32);
+        #endif
+}
+#endif
+
+int main (void) {
+	unsigned char i;
+
+	fastbgcolor(BGCOLOR);
+	textcolor(TEXTCOLOR);
+
+	for (i = 0; i < 32; ++i) {
+		sprite_codes[i] = (unsigned char) i + UDG_SHIFT;
+#ifdef __C64__
+		sprite_codes[i] = bgcolormask(sprites_colors[i + i + 1], sprite_codes[i]);
+#endif
+	}
+
+#ifdef __C64__
+	set_graphic_mode();
+
+	memcpy(chargena + 32 * 8, sprites, 256);
+	memcpy(chargenb + 32 * 8, sprites, 256);
+#endif
+#ifdef __SPECTRUM__
+	set_graphic_mode();
 #endif
 
 	for (i = 0; i < ML; ++i) {
@@ -332,5 +331,6 @@ int main (void) {
 			clrscr();
 		} while (main_loop() != 0);
 	}
-	return EXIT_SUCCESS;
+	//return EXIT_SUCCESS;
+	return 0;
 }

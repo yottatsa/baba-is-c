@@ -4,15 +4,29 @@
 #ifndef _FASTCONIO_H
 #define _FASTCONIO_H
 
+
+#ifdef __C64__
+#define GRAPHIC
+#endif
+
+#ifdef __SPECTRUM__
+#define GRAPHIC
+#endif
+
+
 // Commodore-specific implementation
+#if defined(__C64__)
+
 #define SCREEN_WIDTH 40
 #define SCREEN_HEIGHT 25
 
-#ifdef __C64__
+
 
 // C64
 #include <c64.h>
 #define TEXT_RAM       ((unsigned char*)0x0400)
+#define UDG_SHIFT	32
+
 
 unsigned char *_textptr;
 unsigned char *_colorptr;
@@ -20,18 +34,13 @@ unsigned char _fgcolor, _bgcolor;
 #define fastgotoxy(x, y) _textptr = TEXT_RAM + x + y * SCREEN_WIDTH; _colorptr = COLOR_RAM + x + y * SCREEN_WIDTH;
 #define fasttextcolor(c) _fgcolor = c;
 #define fastbgcolor(c) VIC.bgcolor0 = c; // for stdchr
-#define fastcputs(s, l) { \
-	unsigned char i; \
-	for (i = 0; i < l; ++i) { \
-		*(_textptr++) = *(s++); \
-		*(_colorptr++) = _fgcolor; \
-	} \
-}
 #define fastcputc(c) \
 	*(_textptr++) = *(c); \
 	*(_colorptr++) = _fgcolor;
 
+
 #define bgcolormask(m, c) ((c & BYTE(0011,1111)) | m)
+
 
 #define BLACK		COLOR_BLACK
 #define WHITE		COLOR_WHITE
@@ -51,26 +60,50 @@ unsigned char _fgcolor, _bgcolor;
 #define LIGHTBLUE	COLOR_LIGHTBLUE
 #define LIGHTGRAY	COLOR_GRAY3
 
+
 #define BGCOLORMASK0	BYTE(0000,0000)
 #define BGCOLORMASK1	BYTE(0100,0000)
 #define BGCOLORMASK2	BYTE(1000,0000)
 #define BGCOLORMASK3	BYTE(1100,0000)
 
+#else
+
+#define ORANGE		RED
+
+#endif
+
+
+// z88dk
+#if defined(__SPECTRUM__)
+#include <spectrum.h>
+#define UDG_SHIFT	128
+
+#define SCREEN_WIDTH 32
+#define SCREEN_HEIGHT 24
+
+#define fastgotoxy(x, y) gotoxy(x, y)
+#define fasttextcolor(c) textcolor(c);
+#define fastbgcolor(c) textbackground(c); zx_border(c);
+#define fastcputc(c) putch(*(c));
+
+
 #endif
 
 
 // ANSI C implementation
-#ifndef __C64__
+#if !defined(__C64__) && !defined(__SPECTRUM__)
+
+#define SCREEN_WIDTH 40
+#define SCREEN_HEIGHT 25
+
+#define cgetc getch
 #define fastgotoxy(x, y) gotoxy(x, y)
 #define fasttextcolor(c) textcolor(c);
-#define fastbgcolor(c) bgcolor(c);
-#define fastcputs(s, l) { \
-	unsigned int x = wherex(); \
-	printf("%s%.*s", (x >= SCREEN_WIDTH) ? "\n" : "", l, s); \
-}
-#define fastcputc(c) cputc(*(c));
+#define fastbgcolor(c) textbackground(c);
+#define fastcputc(c) putch(*(c));
 
-#define ORANGE		RED
+
 #endif
+
 
 #endif

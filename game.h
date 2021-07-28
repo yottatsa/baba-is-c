@@ -50,8 +50,7 @@ unsigned char l1[] = {
 	WA, IS, ST, EM, EM, EM, EM, EM, EM, EM, RO, IS, PU,
 };
 
-char* levels[] = {
-	// 9270 rem level data - use "d" to create
+unsigned char* levels[] = {
 	l1,
 };
 

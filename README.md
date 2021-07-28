@@ -5,6 +5,12 @@ BABA IS C
 
 based on ideas from [Nick Bensema][BABA-IS-C64], [Arvi "Hempuli" Teikari][BABA-IS-YOU]
 
+## tl;dr
+
+    $ make CC65_TARGET=c64 && x64 -autostart baba # Commodore 64
+    $ make Z88DK_HOME=/usr Z88DK_TARGET=zx && xspect -tap baba.tap # ZX Spectrum
+    $ make && ./baba # any gcc/conio-compatible
+
 ## Trivia
 
 I've got a C64 on my birthday in August 2020, and at the same time I have played original game by Arvi.

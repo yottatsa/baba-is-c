@@ -1,9 +1,15 @@
-CC65_TARGET = c64
+#Z88DK_TARGET = zx
+#CC65_TARGET = c64
 CC65_HOME = /usr
+Z88DK_HOME = /usr
 PROG = baba
 OBJS = $(PROG).o
 
-ifdef CC65_TARGET
+ifdef Z88DK_TARGET
+CC      = $(Z88DK_HOME)/bin/zcc
+CFLAGS  = +$(Z88DK_TARGET) 
+LDFLAGS = +$(Z88DK_TARGET) -lndos -create-app
+else ifdef CC65_TARGET
 CC      = $(CC65_HOME)/bin/cl65
 CFLAGS  = -t $(CC65_TARGET) --standard c99 -Oi -Or -Os -Cl
 LDFLAGS = -t $(CC65_TARGET) -m $(PROG).map -Ln $(PROG).lbl
@@ -20,13 +26,10 @@ default: $(PROG)
 $(PROG): $(OBJS) 
 
 %.o: %.s
-	$(CC) -c $(CFLAGS) -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 %.o: %.c
-	$(CC) -c $(CFLAGS) -o $@ $<
-
-%.s: %.c
-	$(CC) -c $(CFLAGS) -S -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
 	rm -rf $(OBJS) $(PROG)

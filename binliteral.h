@@ -28,6 +28,7 @@
 #define _CCAT(a,b)    a##b
 #define CCAT(a,b)   _CCAT(a,b)
 
-#define BYTE(a,b)        HEX( CCAT(B2H(a),B2H(b)) )
+#define BYTE(a,b)	HEX( CCAT(B2H(a),B2H(b)) )
+#define NBYTE(a,b)	(255 & ~BYTE(a,b))
 
 #endif

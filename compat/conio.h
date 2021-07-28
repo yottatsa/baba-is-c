@@ -345,10 +345,5 @@ class __CONIO_H{
 #define _ungetch        ungetch
 
 
-// for cc65
-#define bgcolor	textbackground
-#define cgetc getch
-#define cputc putch
-
 #endif
 
