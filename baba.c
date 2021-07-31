@@ -5,9 +5,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "resources.h"
+
 #include "fastconio.h"
 #include "game.h"
-#include "resources.h"
+#include "animation.h"
+#include "graphic.h"
+
 
 // 25 dim pf%(mx):rem playfield map
 unsigned char pf[MX], pfbm[MX];
@@ -203,102 +207,11 @@ unsigned char main_loop(void) {
 			case 's': 
 				move(0, 1);
 				break;
-#ifdef __C64__
-			case '1':
-				VIC.addr = (VIC.addr & BYTE(1111,0000)) | BYTE(0000,1100);
-				break;
-			case '2':
-				VIC.addr = (VIC.addr & BYTE(1111,0000)) | BYTE(0000,1110);
-				break;
-#endif
 			default: ;;
 		}
 	}
 	return 0;
 }
-
-#ifdef __C64__
-
-#define PROCESSOR_PORT				*((unsigned char*)0x01)
-#define PROCESSOR_PORT_IOCHAR_VISIBILITY	0x04
-#define CIA1_CRA_TIMER				0x01
-
-/* https://www.c64-wiki.com/wiki/VIC_bank https://sta.c64.org/cbm64mem.html
- * Make sure bits 0 and 1 are set to outputs and change banks
- */
-#define CIA2_SET_BANK(x) CIA2.ddra = CIA2.ddra | 0x03; CIA2.pra = CIA2.pra & ~x
-
-unsigned char *chargena;
-extern unsigned char _CHARSETA_START__;
-unsigned char *chargenb;
-extern unsigned char _CHARSETB_START__;
-
-void set_graphic_mode(void) {
-	unsigned char *origchargen = (void*)0xd000;
-	chargena = &_CHARSETA_START__;
-	chargenb = &_CHARSETB_START__;
-
-	/* https://www.c64-wiki.com/wiki/CIA
-	 * Turn off interrupts
-	 */
-	CIA1.cra = CIA1.cra & ~CIA1_CRA_TIMER;
-
-	/* https://sta.c64.org/cbm64mem.html
-	 * Make Character ROM visible at $D000-$DFFF.
-	 */
-	PROCESSOR_PORT = PROCESSOR_PORT & ~PROCESSOR_PORT_IOCHAR_VISIBILITY;
-
-	// Copy character set from ROM to RAM
-	memcpy(chargena, origchargen, 1024); 
-	memcpy(chargenb, origchargen, 1024); 
-
-	/* https://sta.c64.org/cbm64mem.html
-	 * Restore I/O area visible at $D000-$DFFF.
-	 */
-	PROCESSOR_PORT = PROCESSOR_PORT | PROCESSOR_PORT_IOCHAR_VISIBILITY;
-	
-	// Turn on interrupts
-	CIA1.cra = CIA1.cra | CIA1_CRA_TIMER;
-
-	/* https://www.c64-wiki.com/wiki/VIC_bank https://sta.c64.org/cbm64mem.html
-	 * 3: $C000–$FFFF
-	 */
-	//CIA2_SET_BANK(0x03);
-	
-	/* https://www.c64-wiki.com/wiki/Standard_Character_Mode
-	 * In Control Register 1 ($d011) bit 6 (ECM) must be cleared and bit 5 (BMM) must be cleared. In Control Register 2 ($d016), bit 4 (MCM) must be cleared. 
-	 */
-	// ECM
-	VIC.ctrl2 = VIC.ctrl2 & ~(1 << 4);
-	VIC.ctrl1 = (VIC.ctrl1 & ~(1 << 5)) | (1 << 6);
-
-	VIC.bgcolor1 = BGCOLOR1;
-	VIC.bgcolor2 = BGCOLOR2;
-	VIC.bgcolor3 = BGCOLOR3;
-
-	/* https://www.c64-wiki.com/wiki/53272 https://sta.c64.org/cbm64mem.html
-	 * When in text screen mode, the VIC-II looks to 53272 for information on where the character set and text screen character RAM is located:
-	 * - The four most significant bits form a 4-bit number in the range 0 thru 15: Multiplied with 1024 this gives the start address for the screen character RAM.
-	 * - Bits 1 thru 3 (weights 2 thru 8) form a 3-bit number in the range 0 thru 7: Multiplied with 2048 this gives the start address for the character set.
-	 * Notice that all the start addresses of character sets, screen character RAM, bitmaps, and color information, are all relative to the start address of the current VIC bank!.
-	 */
-	VIC.addr = (VIC.addr & BYTE(1111,0000)) | BYTE(0000,1100);
-}
-#endif
-
-#ifdef __SPECTRUM__
-#include <sys/ioctl.h>                // required for querying system capabilites and for switching screen modes
-
-void set_graphic_mode(void) {
-	void *param = &sprites;
-	console_ioctl(IOCTL_GENCON_SET_UDGS, &param);
-        
-        // On the ZX Spectrum, we switch to 32 column mode
-        #if defined(__SPECTRUM__)
-                printf("%c%c",1,32);
-        #endif
-}
-#endif
 
 int main (void) {
 	unsigned char i;
@@ -313,13 +226,26 @@ int main (void) {
 #endif
 	}
 
-#ifdef __C64__
+#if defined(__C64__) && defined(GRAPHIC)
+	chargena = &_CHARSETA_START__;
 	set_graphic_mode();
 
 	memcpy(chargena + 32 * 8, sprites, 256);
-	memcpy(chargenb + 32 * 8, sprites, 256);
 #endif
-#ifdef __SPECTRUM__
+
+#if defined(__C64__) && defined(GRAPHIC) && defined(ANIMATION)
+	chargenb = &_CHARSETB_START__;
+
+	memcpy(chargenb, chargena, 512); 
+	for (i = 0; i < 255; ++i) {
+		if (p1[i] != FF) {
+			*(chargenb + 32 * 8 + i) = p1[i];
+		}
+	}
+	set_animation();
+#endif
+
+#if defined(__SPECTRUM__) && defined(GRAPHIC)
 	set_graphic_mode();
 #endif
 

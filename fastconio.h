@@ -5,15 +5,6 @@
 #define _FASTCONIO_H
 
 
-#ifdef __C64__
-#define GRAPHIC
-#endif
-
-#ifdef __SPECTRUM__
-#define GRAPHIC
-#endif
-
-
 // Commodore-specific implementation
 #if defined(__C64__)
 
@@ -21,9 +12,9 @@
 #define SCREEN_HEIGHT 25
 
 
-
 // C64
 #include <c64.h>
+#include <6502.h>
 #define TEXT_RAM       ((unsigned char*)0x0400)
 #define UDG_SHIFT	32
 

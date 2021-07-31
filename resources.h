@@ -7,6 +7,17 @@
 #include "binliteral.h"
 #include "fastconio.h"
 
+
+#ifdef __C64__
+#define GRAPHIC
+#define ANIMATION
+#endif
+
+#ifdef __SPECTRUM__
+#define GRAPHIC
+#endif
+
+
 #define BGCOLOR LIGHTBLUE
 #define TEXTCOLOR WHITE
 
@@ -87,7 +98,7 @@ unsigned char sprites_colors[] = {
 };
 
 #ifdef GRAPHIC
-unsigned char sprites[] = {
+unsigned char sprites[256] = {
 	// ....
 	BYTE(0000,0000),
 	BYTE(0000,0000),
@@ -410,6 +421,398 @@ unsigned char sprites[] = {
 	BYTE(1110,1100),
 	BYTE(0000,0000),
 	BYTE(0000,0000),
+
+
+};
+#endif
+
+#ifdef ANIMATION
+
+#define FF		255
+#define SAME_SPRITE	FF, FF, FF, FF, FF, FF, FF, FF
+
+unsigned char p1[256] = {
+	// ....
+	SAME_SPRITE,
+
+	// baba icon
+	BYTE(0000,0000),
+	BYTE(0001,0100),
+	BYTE(0111,1100),
+	BYTE(1110,1010),
+	BYTE(1111,1110),
+	BYTE(1111,1110),
+	BYTE(1010,0010),
+	BYTE(0000,0000),
+
+	// rock icon
+	SAME_SPRITE,
+
+	// wall icon
+	SAME_SPRITE,
+
+	// flag icon p1
+	BYTE(0000,0000),
+	BYTE(0111,0000),
+	BYTE(0101,1100),
+	BYTE(0111,1100),
+	BYTE(0100,1100),
+	BYTE(0100,0000),
+	BYTE(0100,0000),
+	BYTE(0000,0000),
+
+	// water icon
+	BYTE(0000,0110),
+	BYTE(1111,1001),
+	BYTE(0000,0000),
+	BYTE(0011,1100),
+	BYTE(1100,0111),
+	BYTE(0000,0000),
+	BYTE(0001,1111),
+	BYTE(1110,0000),
+
+	// key icon
+	SAME_SPRITE,
+
+	// door icon
+	SAME_SPRITE,
+
+	SAME_SPRITE,
+	
+	// baba
+	SAME_SPRITE,
+
+	// rock
+	SAME_SPRITE,
+
+	// wall
+	SAME_SPRITE,
+
+	// flag
+	SAME_SPRITE,
+
+	// watr
+	SAME_SPRITE,
+
+	// key
+	SAME_SPRITE,
+
+
+	// door
+	SAME_SPRITE,
+
+	// you
+	SAME_SPRITE,
+
+	// win
+	SAME_SPRITE,
+
+	// stop
+	SAME_SPRITE,
+
+	// push
+	SAME_SPRITE,
+
+	// lock/shut
+	SAME_SPRITE,
+
+
+	// open
+	SAME_SPRITE,
+
+	// sink
+	SAME_SPRITE,
+
+	// lose
+	SAME_SPRITE,
+
+	// hot
+	SAME_SPRITE,
+
+	// melt
+	SAME_SPRITE,
+
+
+
+	SAME_SPRITE,
+
+
+	SAME_SPRITE,
+	
+	// lava icon
+	BYTE(1101,1111),
+	BYTE(1001,1101),
+	BYTE(1010,1001),
+	BYTE(1111,1010),
+	BYTE(1011,1111),
+	BYTE(0011,1011),
+	BYTE(0101,0011),
+	BYTE(1111,0101),
+
+	// lava
+	SAME_SPRITE,
+
+
+	// has
+	SAME_SPRITE,
+
+	// is
+	SAME_SPRITE,
+
+
+};
+
+unsigned char p2[256] = {
+	// ....
+	SAME_SPRITE,
+
+	// baba icon
+	SAME_SPRITE,
+
+	// rock icon
+	SAME_SPRITE,
+
+	// wall icon
+	SAME_SPRITE,
+
+	// flag icon p2
+	BYTE(0000,0000),
+	BYTE(0110,0000),
+	BYTE(0101,1100),
+	BYTE(0111,1100),
+	BYTE(0101,1100),
+	BYTE(0100,0000),
+	BYTE(0100,0000),
+	BYTE(0000,0000),
+
+	// water icon
+	BYTE(0000,0110),
+	BYTE(1111,1001),
+	BYTE(0000,0000),
+	BYTE(0011,1100),
+	BYTE(1100,0111),
+	BYTE(0000,0000),
+	BYTE(0001,1111),
+	BYTE(1110,0000),
+
+	// key icon
+	SAME_SPRITE,
+
+	// door icon
+	SAME_SPRITE,
+
+	SAME_SPRITE,
+	
+	// baba
+	SAME_SPRITE,
+
+	// rock
+	SAME_SPRITE,
+
+	// wall
+	SAME_SPRITE,
+
+	// flag
+	SAME_SPRITE,
+
+	// watr
+	SAME_SPRITE,
+
+	// key
+	SAME_SPRITE,
+
+
+	// door
+	SAME_SPRITE,
+
+	// you
+	SAME_SPRITE,
+
+	// win
+	SAME_SPRITE,
+
+	// stop
+	SAME_SPRITE,
+
+	// push
+	SAME_SPRITE,
+
+	// lock/shut
+	SAME_SPRITE,
+
+
+	// open
+	SAME_SPRITE,
+
+	// sink
+	SAME_SPRITE,
+
+	// lose
+	SAME_SPRITE,
+
+	// hot
+	SAME_SPRITE,
+
+	// melt
+	SAME_SPRITE,
+
+
+
+	SAME_SPRITE,
+
+
+	SAME_SPRITE,
+	
+	// lava icon
+	BYTE(1101,1111),
+	BYTE(1001,1101),
+	BYTE(1010,1001),
+	BYTE(1111,1010),
+	BYTE(1011,1111),
+	BYTE(0011,1011),
+	BYTE(0101,0011),
+	BYTE(1111,0101),
+
+	// lava
+	SAME_SPRITE,
+
+
+	// has
+	SAME_SPRITE,
+
+	// is
+	SAME_SPRITE,
+
+
+};
+
+unsigned char p3[256] = {
+	// ....
+	SAME_SPRITE,
+
+	// baba icon
+	BYTE(0000,0000),
+	BYTE(0001,0100),
+	BYTE(0111,1100),
+	BYTE(1110,1010),
+	BYTE(1111,1110),
+	BYTE(1111,1110),
+	BYTE(1010,0010),
+	BYTE(0000,0000),
+
+	// rock icon
+	SAME_SPRITE,
+
+	// wall icon
+	SAME_SPRITE,
+
+	// flag icon p3
+	BYTE(0000,0000),
+	BYTE(0110,0100),
+	BYTE(0101,1100),
+	BYTE(0111,1100),
+	BYTE(0101,0000),
+	BYTE(0100,0000),
+	BYTE(0100,0000),
+	BYTE(0000,0000),
+
+	// water icon
+	BYTE(0000,0110),
+	BYTE(1111,1001),
+	BYTE(0000,0000),
+	BYTE(0011,1100),
+	BYTE(1100,0111),
+	BYTE(0000,0000),
+	BYTE(0001,1111),
+	BYTE(1110,0000),
+
+	// key icon
+	SAME_SPRITE,
+
+	// door icon
+	SAME_SPRITE,
+
+	SAME_SPRITE,
+	
+	// baba
+	SAME_SPRITE,
+
+	// rock
+	SAME_SPRITE,
+
+	// wall
+	SAME_SPRITE,
+
+	// flag
+	SAME_SPRITE,
+
+	// watr
+	SAME_SPRITE,
+
+	// key
+	SAME_SPRITE,
+
+
+	// door
+	SAME_SPRITE,
+
+	// you
+	SAME_SPRITE,
+
+	// win
+	SAME_SPRITE,
+
+	// stop
+	SAME_SPRITE,
+
+	// push
+	SAME_SPRITE,
+
+	// lock/shut
+	SAME_SPRITE,
+
+
+	// open
+	SAME_SPRITE,
+
+	// sink
+	SAME_SPRITE,
+
+	// lose
+	SAME_SPRITE,
+
+	// hot
+	SAME_SPRITE,
+
+	// melt
+	SAME_SPRITE,
+
+
+
+	SAME_SPRITE,
+
+
+	SAME_SPRITE,
+	
+	// lava icon
+	BYTE(1101,1111),
+	BYTE(1001,1101),
+	BYTE(1010,1001),
+	BYTE(1111,1010),
+	BYTE(1011,1111),
+	BYTE(0011,1011),
+	BYTE(0101,0011),
+	BYTE(1111,0101),
+
+	// lava
+	SAME_SPRITE,
+
+
+	// has
+	SAME_SPRITE,
+
+	// is
+	SAME_SPRITE,
 
 
 };

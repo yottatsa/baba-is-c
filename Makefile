@@ -3,7 +3,7 @@
 CC65_HOME = /usr
 Z88DK_HOME = /usr
 PROG = baba
-OBJS = $(PROG).o
+OBJS = $(PROG).o animation.o
 
 ifdef Z88DK_TARGET
 CC      = $(Z88DK_HOME)/bin/zcc
@@ -11,7 +11,7 @@ CFLAGS  = +$(Z88DK_TARGET)
 LDFLAGS = +$(Z88DK_TARGET) -lndos -create-app
 else ifdef CC65_TARGET
 CC      = $(CC65_HOME)/bin/cl65
-CFLAGS  = -t $(CC65_TARGET) --standard c99 -Oi -Or -Os -Cl
+CFLAGS  = -t $(CC65_TARGET)  -Oi -Or -Os -Cl
 LDFLAGS = -t $(CC65_TARGET) -m $(PROG).map -Ln $(PROG).lbl
 else
 CC      = g++
@@ -32,4 +32,4 @@ $(PROG): $(OBJS)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -rf $(OBJS) $(PROG)
+	rm -f $(OBJS) $(PROG)
